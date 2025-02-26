@@ -444,6 +444,206 @@ const data = [
 
 
 
+document.addEventListener('DOMContentLoaded', function() {
+    const tableBody = document.getElementById('player-rows');
+    const searchInput = document.getElementById('search');
+    const teamFilter = document.getElementById('team-filter');
+    const darkModeToggle = document.getElementById('dark-mode-toggle');
+    const tableHeaders = document.querySelectorAll('#player-stats th');
+    
+    // Track sort state
+    let sortConfig = {
+        column: 'points', 
+        direction: 'desc'  
+    };
+    
+    // Initialize the dashboard
+    function initializeDashboard() {
+        populateTeamFilter();
+        renderPlayerTable(data);
+        setupEventListeners();
+    }
 
+    // Populate the team filter dropdown with unique team names
+    function populateTeamFilter() {
+        const teams = [...new Set(data.map(player => player.team))].sort();
+        
+        teams.forEach(team => {
+            const option = document.createElement('option');
+            option.value = team;
+            option.textContent = team;
+            teamFilter.appendChild(option);
+        });
+    }
 
-
+    // Render the player table with the given data
+    function renderPlayerTable(playersData) {
+        // Clear existing rows
+        tableBody.innerHTML = '';
+        
+        // Sort the data based on current sort configuration
+        const sortedData = sortData(playersData, sortConfig.column, sortConfig.direction);
+        
+        // Create and append rows
+        sortedData.forEach(player => {
+            const row = document.createElement('tr');
+            
+            // Add player name
+            const nameCell = document.createElement('td');
+            nameCell.textContent = player.name;
+            row.appendChild(nameCell);
+            
+            // Add team
+           // Add team
+const teamCell = document.createElement('td');
+// Extract just the abbreviation from the team string
+// The format is "Team Name (ABBR)", so we extract what's between parentheses
+const teamAbbr = player.team.match(/\(([^)]+)\)/)[1];
+teamCell.textContent = teamAbbr;
+row.appendChild(teamCell);
+            
+            // Add points
+            const pointsCell = document.createElement('td');
+            pointsCell.textContent = player.points;
+            row.appendChild(pointsCell);
+            
+            // Add rebounds
+            const reboundsCell = document.createElement('td');
+            reboundsCell.textContent = player.rebounds;
+            row.appendChild(reboundsCell);
+            
+            // Add assists
+            const assistsCell = document.createElement('td');
+            assistsCell.textContent = player.assists;
+            row.appendChild(assistsCell);
+            
+            // Add hover effect for the row
+            row.addEventListener('mouseover', function() {
+                this.style.backgroundColor = isDarkMode() ? '#555' : '#e6f7ff';
+            });
+            
+            row.addEventListener('mouseout', function() {
+                this.style.backgroundColor = '';
+            });
+            
+            tableBody.appendChild(row);
+        });
+    }
+    
+    // Set up all event listeners
+    function setupEventListeners() {
+        // Search input event
+        searchInput.addEventListener('input', filterPlayers);
+        
+        // Team filter change event
+        teamFilter.addEventListener('change', filterPlayers);
+        
+        // Dark mode toggle click event
+        darkModeToggle.addEventListener('click', toggleDarkMode);
+        
+        // Table header click events for sorting
+        tableHeaders.forEach(header => {
+            header.addEventListener('click', function() {
+                handleHeaderClick(this.textContent.toLowerCase());
+            });
+        });
+    }
+    
+    // Filter players based on search input and team filter
+    function filterPlayers() {
+        const searchTerm = searchInput.value.toLowerCase();
+        const selectedTeam = teamFilter.value;
+        
+        const filteredData = data.filter(player => {
+            // Filter by search term
+            const nameMatch = player.name.toLowerCase().includes(searchTerm);
+            
+            // Filter by team
+            const teamMatch = selectedTeam === 'all' || player.team === selectedTeam;
+            
+            return nameMatch && teamMatch;
+        });
+        
+        renderPlayerTable(filteredData);
+    }
+    
+    // Toggle dark mode
+    function toggleDarkMode() {
+        document.body.classList.toggle('dark-mode');
+        
+        // Update button text
+        darkModeToggle.textContent = isDarkMode() 
+            ? 'Toggle Light Mode' 
+            : 'Toggle Dark Mode';
+    }
+    
+    // Check if dark mode is enabled
+    function isDarkMode() {
+        return document.body.classList.contains('dark-mode');
+    }
+    
+    // Handle sorting when a table header is clicked
+    function handleHeaderClick(column) {
+        // Map header text to object property
+        const columnMap = {
+            'name': 'name',
+            'team': 'team',
+            'points': 'points',
+            'rebounds': 'rebounds',
+            'assists': 'assists'
+        };
+        
+        const property = columnMap[column];
+        
+        // If clicking the same column, toggle direction
+        if (sortConfig.column === property) {
+            sortConfig.direction = sortConfig.direction === 'asc' ? 'desc' : 'asc';
+        } else {
+    
+            sortConfig.column = property;
+            sortConfig.direction = property === 'name' || property === 'team' ? 'asc' : 'desc';
+        }
+        
+        updateSortIndicators();
+        
+        filterPlayers();
+    }
+    
+    // Update sort direction indicators in the table headers
+    function updateSortIndicators() {
+        tableHeaders.forEach(header => {
+            // Remove existing indicators
+            header.textContent = header.textContent.replace(' ↑', '').replace(' ↓', '');
+            
+            const columnMap = {
+                'name': 'name',
+                'team': 'team',
+                'points': 'points',
+                'rebounds': 'rebounds',
+                'assists': 'assists'
+            };
+            
+            if (columnMap[header.textContent.toLowerCase()] === sortConfig.column) {
+                header.textContent += sortConfig.direction === 'asc' ? ' ↑' : ' ↓';
+            }
+        });
+    }
+    
+    // Sort data based on a property and direction
+    function sortData(data, property, direction) {
+        return [...data].sort((a, b) => {
+            if (property === 'name' || property === 'team') {
+                // String comparison for text fields
+                const compareResult = a[property].localeCompare(b[property]);
+                return direction === 'asc' ? compareResult : -compareResult;
+            } else {
+                // Numeric comparison for number fields
+                const compareResult = a[property] - b[property];
+                return direction === 'asc' ? compareResult : -compareResult;
+            }
+        });
+    }
+    
+    // Initialize the dashboard
+    initializeDashboard();
+});
